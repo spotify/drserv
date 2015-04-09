@@ -12,6 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import os
+import urlparse
+from crtauth import ssh
+from crtauth import client
+import requests
+
+
+def _authenticate(base_url, username, private_key_filename):
+
+    with open(private_key_filename) as f:
+        signer = ssh.SingleKeySigner(f.read())
+
+    challenge = _auth_get(
+        base_url, 'request:%s' % client.create_request(username))
+    hostname = urlparse.urlparse(base_url).netloc
+    if hostname.index(':') != -1:
+        # netloc might contain port information as well
+        hostname = hostname[:hostname.index(':')]
+    response = client.create_response(challenge, hostname, signer)
+    return _auth_get(base_url, 'response:' + response)
+
+
+def _auth_get(base_url, value):
+    response = requests.get("%s/_auth" % base_url,
+                            headers={"X-CHAP": value})
+    if not response.ok:
+        raise Exception("Authentication request failed with status %d: %s"
+                        % (response.status_code, response.text))
+    return response.headers["X-CHAP"].split(":")[1]
 
 
 def main():
@@ -34,7 +63,18 @@ def main():
     parser.add_argument('package_filename')
 
     args = parser.parse_args()
-    print(args)
+    token = _authenticate(args.url, args.auth_user, args.key_file)
+    url = ('%s/v1/publish/%s/%s/%s/%s' %
+           (args.url, args.major_dist, args.minor_dist, args.component,
+            os.path.basename(args.package_filename)))
+    with open(args.package_filename) as f:
+        response = requests.post(url, data=f,
+                                 headers={'Authorization': 'chap:' + token})
+        if response.ok:
+            print 'Upload succeeded'
+        else:
+            print 'Fail: %d: %s' % (response.status_code, response.text)
+
 
 if __name__ == '__main__':
     main()

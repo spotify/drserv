@@ -24,6 +24,10 @@ import subprocess
 import yaml
 import sys
 import os
+from crtauth import server
+from crtauth import key_provider
+from crtauth import wsgi
+
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +50,8 @@ class DrservServer(object):
     DrservServer instances listens to a port, responds to API calls
     and
     """
-    def __init__(self, port, base_dir, temp_dir, index_command):
+    def __init__(self, port, base_dir, temp_dir, index_command,
+                 secret, key_dir, hostname):
         log.info('Starting server listening to port %d', port)
         self.base_dir = base_dir
         if not os.path.exists(base_dir):
@@ -56,8 +61,14 @@ class DrservServer(object):
             os.makedirs(temp_dir)
         self.index_command = index_command
 
+        auth_server = server.AuthServer(
+            secret, key_provider.FileKeyProvider(key_dir), hostname,
+            lowest_supported_version=1)
+
         self.wsgi_server = simple_server.make_server(
-            '', port, self.handle_request)
+            '', port, wsgi.CrtauthMiddleware(self.handle_request, auth_server))
+
+
 
     def serve_forever(self):
         self.wsgi_server.serve_forever()
@@ -78,7 +89,7 @@ class DrservServer(object):
                 self.temp_dir)
             log.debug("Received data in file %s" % temp_filename)
 
-            # PyTypeChecker is buggy in 14.1.1
+            # PyTypeChecker is buggy in Intellij IDEA 14.1.1
             # noinspection PyTypeChecker
             target_dir = self.build_target_dir(self.base_dir, pi)
             if not os.path.exists(target_dir):
@@ -167,11 +178,11 @@ def main(arguments):
 
     config = read_config(parser.parse_args(arguments).config)
 
-    server = DrservServer(
+    DrservServer(
         config['listen_port'], config['target_basedir'], config['temp_dir'],
-        config['index_command']
-    )
-    server.serve_forever()
+        config['index_command'], config['crtauth_secret'], config['keys_dir'],
+        config['hostname']
+    ).serve_forever()
 
 
 def read_config(file_name):
