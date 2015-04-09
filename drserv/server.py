@@ -20,6 +20,7 @@ import urllib
 from wsgiref import simple_server
 import time
 import collections
+import subprocess
 import yaml
 import sys
 import os
@@ -45,7 +46,7 @@ class DrservServer(object):
     DrservServer instances listens to a port, responds to API calls
     and
     """
-    def __init__(self, port, base_dir, temp_dir):
+    def __init__(self, port, base_dir, temp_dir, index_command):
         log.info('Starting server listening to port %d', port)
         self.base_dir = base_dir
         if not os.path.exists(base_dir):
@@ -53,6 +54,7 @@ class DrservServer(object):
         self.temp_dir = temp_dir
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
+        self.index_command = index_command
 
         self.wsgi_server = simple_server.make_server(
             '', port, self.handle_request)
@@ -87,6 +89,9 @@ class DrservServer(object):
                     "400 refusing to overwrite existing file %s " % target)
             os.rename(temp_filename, target)
             log.debug("renamed %s into %s " % (temp_filename, target))
+            log.debug("calling %s" % self.index_command)
+            subprocess.check_call(self.index_command)
+            log.debug("called %s" % self.index_command)
 
             start_response("202 Accepted", [('Content-type', 'text/plain')])
             return "OK\n",
@@ -163,7 +168,8 @@ def main(arguments):
     config = read_config(parser.parse_args(arguments).config)
 
     server = DrservServer(
-        config['listen_port'], config['target_basedir'], config['temp_dir']
+        config['listen_port'], config['target_basedir'], config['temp_dir'],
+        config['index_command']
     )
     server.serve_forever()
 
