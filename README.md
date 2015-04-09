@@ -24,12 +24,4 @@ The content of the deb file to be published is to be provided as POST body
 data.
 
 
-
-
-
 [RepositoryFormat]: https://wiki.debian.org/RepositoryFormat
-
-
-
-
-

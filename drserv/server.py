@@ -22,6 +22,7 @@ import time
 import collections
 import yaml
 import sys
+import os
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ PackageInfo = collections.namedtuple(
 
 # size of the chunks to read from the socket to the HTTP client
 BUFFER_SIZE = 8192
+
 
 class HttpException(Exception):
     """
@@ -46,7 +48,12 @@ class DrservServer(object):
     def __init__(self, port, base_dir, temp_dir):
         log.info('Starting server listening to port %d', port)
         self.base_dir = base_dir
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
         self.temp_dir = temp_dir
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+
         self.wsgi_server = simple_server.make_server(
             '', port, self.handle_request)
 
@@ -58,22 +65,49 @@ class DrservServer(object):
             path = urllib.unquote(environ['PATH_INFO'])
             if not path.startswith('/v1/publish'):
                 raise HttpException('404 Not found')
+            if environ['REQUEST_METHOD'] != 'POST':
+                raise HttpException('405 Only POST allowed')
             pi = self.parse_path(path)
             log.debug("Publishing %s to %s/%s/%s" %
                       (pi.file, pi.major_dist, pi.minor_dist, pi.component))
 
             temp_filename = self.store_post_data(
-                environ['wsgi.input'], environ['CONTENT_LENGTH'], )
+                int(environ['CONTENT_LENGTH']), environ['wsgi.input'],
+                self.temp_dir)
+            log.debug("Received data in file %s" % temp_filename)
+
+            # PyTypeChecker is buggy in 14.1.1
+            # noinspection PyTypeChecker
+            target_dir = self.build_target_dir(self.base_dir, pi)
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+            target = os.path.join(target_dir, pi.file)
+            if os.path.exists(target):
+                raise HttpException(
+                    "400 refusing to overwrite existing file %s " % target)
+            os.rename(temp_filename, target)
+            log.debug("renamed %s into %s " % (temp_filename, target))
 
             start_response("202 Accepted", [('Content-type', 'text/plain')])
             return "OK\n",
 
         except HttpException, e:
+            log.warning("Failed request: " + e.message)
             start_response(e.message,
                            [('Content-type', 'text/plain'),
                             ('Content-length', str(len(e.message) - 3))])
             return e.message[4:] + "\n",
 
+    @staticmethod
+    def build_target_dir(base_dir, package_info):
+        file_parts = package_info.file.split("_")
+        if len(file_parts) < 2 or not file_parts[0]:
+            raise HttpException("400 Filename %s invalid, should be of format "
+                                "NAME_VERSION.deb" % package_info.file)
+        return os.path.join(
+            base_dir, package_info.major_dist, 'pool', package_info.minor_dist,
+            package_info.component, file_parts[0]
+        )
 
     @staticmethod
     def store_post_data(length, to_read_from, temp_dir):
@@ -82,15 +116,13 @@ class DrservServer(object):
         unique temporary file in temp_dir
         """
         with tempfile.NamedTemporaryFile(dir=temp_dir, delete=False) as f:
-            to_read = max(length, BUFFER_SIZE)
+            to_read = min(length, BUFFER_SIZE)
             while length:
                 buf = to_read_from.read(to_read)
                 length -= len(buf)
-                to_read = max(length, BUFFER_SIZE)
+                to_read = min(length, BUFFER_SIZE)
                 f.write(buf)
-            return f.name
-
-
+        return f.name
 
     @staticmethod
     def parse_path(path):
@@ -109,13 +141,6 @@ class DrservServer(object):
                 "400 path needs to be of form /v1/publish/{major.dist}"
                 "/{minor.dist}/{component}/{filename.deb}")
         return PackageInfo(elements[2], elements[3], elements[4], elements[5])
-
-
-
-    @staticmethod
-    def fail(status_string, start_response):
-        start_response(status_string, [('Content-type', 'text/plain')])
-        return ""
 
 
 def setup_logging():
@@ -148,7 +173,8 @@ def read_config(file_name):
         with open(file_name) as f:
             return yaml.load(f)
     except IOError, e:
-        fail("Failed to open config {}: {}".format(args.config, e.strerror))
+        fail("Failed to open config {}: {}".format(file_name, e.strerror))
+
 
 def fail(message):
     print(message, file=sys.stderr)
