@@ -14,6 +14,7 @@
 
 from __future__ import print_function
 import argparse
+import hashlib
 import logging
 import tempfile
 import urllib
@@ -51,7 +52,7 @@ class DrservServer(object):
     and
     """
     def __init__(self, port, base_dir, temp_dir, index_command,
-                 secret, key_dir, hostname):
+                 auth_server):
         log.info('Starting server listening to port %d', port)
         self.base_dir = base_dir
         if not os.path.exists(base_dir):
@@ -60,10 +61,6 @@ class DrservServer(object):
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
         self.index_command = index_command
-
-        auth_server = server.AuthServer(
-            secret, key_provider.FileKeyProvider(key_dir), hostname,
-            lowest_supported_version=1)
 
         self.wsgi_server = simple_server.make_server(
             '', port, wsgi.CrtauthMiddleware(self.handle_request, auth_server))
@@ -84,7 +81,7 @@ class DrservServer(object):
             log.debug("Publishing %s to %s/%s/%s" %
                       (pi.file, pi.major_dist, pi.minor_dist, pi.component))
 
-            temp_filename = self.store_post_data(
+            temp_filename, checksum = self.store_post_data(
                 int(environ['CONTENT_LENGTH']), environ['wsgi.input'],
                 self.temp_dir)
             log.debug("Received data in file %s" % temp_filename)
@@ -96,10 +93,12 @@ class DrservServer(object):
                 os.makedirs(target_dir)
             target = os.path.join(target_dir, pi.file)
             if os.path.exists(target):
+                os.unlink(temp_filename)
                 raise HttpException(
                     "400 refusing to overwrite existing file %s " % target)
             os.rename(temp_filename, target)
-            log.debug("renamed %s into %s " % (temp_filename, target))
+            log.debug("renamed %s into %s with sha256 %s"
+                      % (temp_filename, target, checksum))
             log.debug("calling %s" % self.index_command)
             subprocess.check_call(self.index_command)
             log.debug("called %s" % self.index_command)
@@ -131,6 +130,7 @@ class DrservServer(object):
         Reads length bytes of POST data from to_read_from and store in a
         unique temporary file in temp_dir
         """
+        hasher = hashlib.sha256()
         with tempfile.NamedTemporaryFile(dir=temp_dir, delete=False) as f:
             to_read = min(length, BUFFER_SIZE)
             while length:
@@ -138,7 +138,8 @@ class DrservServer(object):
                 length -= len(buf)
                 to_read = min(length, BUFFER_SIZE)
                 f.write(buf)
-        return f.name
+                hasher.update(buf)
+        return f.name, hasher.hexdigest()
 
     @staticmethod
     def parse_path(path):
@@ -146,16 +147,22 @@ class DrservServer(object):
         Sanity checking and parsing of the path provided with the API call
         """
         if not isinstance(path, basestring):
-            raise ValueError("wrong type %s of parameter path" % type(path))
+            raise ValueError('wrong type %s of parameter path' % type(path))
         for i, c in enumerate(path):
-            if ord(c) > 0x7f:
-                raise ValueError("Char on pos %d is not ascii: '%s'" % (i, c))
+            if not 0x1f < ord(c) < 0x7f:
+                raise ValueError('Char on pos %d not in valid range: "%s"'
+                                 % (i, c))
 
-        elements = [x for x in path.split("/") if x]
+        elements = [x for x in path.split('/') if x]
+        for e in elements:
+            if e == '..':
+                raise ValueError('Invalid parameter: ' + e)
+        if not elements[-1].endswith('.deb'):
+            raise ValueError('Your filename needs to end with ".deb"')
         if len(elements) != 6:
             raise HttpException(
-                "400 path needs to be of form /v1/publish/{major.dist}"
-                "/{minor.dist}/{component}/{filename.deb}")
+                '400 path needs to be of form /v1/publish/{major.dist}'
+                '/{minor.dist}/{component}/{filename.deb}')
         return PackageInfo(elements[2], elements[3], elements[4], elements[5])
 
 
@@ -178,10 +185,15 @@ def main(arguments):
 
     config = read_config(parser.parse_args(arguments).config)
 
+    auth_server = server.AuthServer(
+        config['crtauth_secret'],
+        key_provider.FileKeyProvider(config['keys_dir']),
+        config['service_name'],
+        lowest_supported_version=1)
+
     DrservServer(
         config['listen_port'], config['target_basedir'], config['temp_dir'],
-        config['index_command'], config['crtauth_secret'], config['keys_dir'],
-        config['hostname']
+        config['index_command'], auth_server
     ).serve_forever()
 
 
@@ -190,7 +202,7 @@ def read_config(file_name):
         with open(file_name) as f:
             return yaml.load(f)
     except IOError, e:
-        fail("Failed to open config {}: {}".format(file_name, e.strerror))
+        fail('Failed to open config {}: {}'.format(file_name, e.strerror))
 
 
 def fail(message):
