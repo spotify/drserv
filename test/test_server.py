@@ -22,4 +22,30 @@ class TestServer(unittest.TestCase):
         self.assertRaises(ValueError, server.DrservServer.parse_path, 42)
         self.assertRaises(ValueError, server.DrservServer.parse_path, u'€')
 
-        #self.assertIsNotNone(server.DrservServer.parse_path("/foo/bar/baz"))
+        major, minor, component, filename = server.DrservServer.parse_path(
+            '/v1/publish/squeeze/stable/non-free/some-package_1.deb')
+        self.assertEquals('squeeze', major)
+        self.assertEquals('stable', minor)
+        self.assertEquals('non-free', component)
+        self.assertEquals('some-package_1.deb', filename)
+
+        # control characters not allowed
+        self.assertRaises(ValueError, server.DrservServer.parse_path, '\x00')
+
+        # can't have .. parameters
+        self.assertRaises(
+            ValueError, server.DrservServer.parse_path,
+            '/v1/publish/../../../some-package_1.deb',
+        )
+
+        # filename part needs to end in ".deb"
+        self.assertRaises(
+            ValueError, server.DrservServer.parse_path,
+            '/v1/publish/squeeze/stable/non-free/foo'
+        )
+
+        # wrong number of path elements
+        self.assertRaises(
+            server.HttpException, server.DrservServer.parse_path,
+            '/v1/publish/squeeze/stable/foo.deb'
+        )
