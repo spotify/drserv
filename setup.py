@@ -1,14 +1,14 @@
 from setuptools import setup
 
-install_requires = [
+install_requires = (
     'pyaml',
     'crtauth',
     'requests==2.6.0',
-]
+)
 
-tests_require = install_requires + [
+tests_require = (
     'nose'
-]
+)
 
 
 setup(
