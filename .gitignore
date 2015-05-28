@@ -2,3 +2,5 @@
 .idea/
 *.pyc
 env/
+*.egg
+*.egg-info
