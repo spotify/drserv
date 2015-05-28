@@ -22,6 +22,7 @@ setup(
     license='Apache 2.0',
     packages=['drserv'],
     scripts=['bin/drserv-server', 'bin/drserv-client'],
+    test_suite='nose.collector',
     install_requires=install_requires,
     tests_require=tests_require,
     classifiers=[
