@@ -1,12 +1,14 @@
 from setuptools import setup
 
-install_requires = (
+install_requires = [
     'pyaml',
     'crtauth',
     'requests==2.6.0',
-)
+]
 
-tests_require = install_requires
+tests_require = install_requires + [
+    'nose'
+]
 
 
 setup(
@@ -19,6 +21,7 @@ setup(
                  'repositories'),
     license='Apache 2.0',
     packages=['drserv'],
+    scripts=['bin/drserv-server', 'bin/drserv-client'],
     install_requires=install_requires,
     tests_require=tests_require,
     classifiers=[
