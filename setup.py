@@ -25,6 +25,12 @@ setup(
     test_suite='nose.collector',
     install_requires=install_requires,
     tests_require=tests_require,
+    entry_points={
+        'console_scripts': [
+            'drserv-server = drserv.server:main',
+            'drserv-client = drserv.client:main'
+        ]
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
