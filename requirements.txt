@@ -1,2 +1,2 @@
-requests
-crtauth
+# This makes `pip install -r requirements.txt` just use the setup from setup.py
+.
