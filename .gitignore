@@ -1,3 +1,7 @@
 *.iml
 .idea/
 *.pyc
+env/
+*.egg
+*.egg-info
+build/

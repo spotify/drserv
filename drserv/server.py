@@ -173,7 +173,7 @@ def setup_logging():
     logging.Formatter.converter = time.gmtime
 
 
-def main(arguments):
+def main():
     setup_logging()
     parser = argparse.ArgumentParser(
         'drserv-server',
@@ -183,7 +183,7 @@ def main(arguments):
                         default='/etc/drserv/drserv.conf',
                         help='the config file')
 
-    config = read_config(parser.parse_args(arguments).config)
+    config = read_config(parser.parse_args().config)
 
     auth_server = server.AuthServer(
         config['crtauth_secret'],
@@ -211,4 +211,4 @@ def fail(message):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
