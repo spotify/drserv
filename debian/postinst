@@ -1,3 +1,4 @@
 #!/bin/bash
 
 adduser --system drserv
+start drserv
