@@ -25,6 +25,7 @@ end script
 script
   [ -f $DEFAULTFILE ] && . $DEFAULTFILE
 
+  chdir /home/drserv
   exec drserv-server
 end script
 
