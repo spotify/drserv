@@ -51,7 +51,7 @@ def main():
     parser.add_argument('--url', action='store', required=True,
                         help='the base url of the drserv service')
 
-    parser.add_argument('--key-file', action='store',
+    parser.add_argument('--key-file', action='store', required=True,
                         help='the rsa private key used to authenticate')
     parser.add_argument('--auth-user', action='store',
                         help='the username to authenticate as')
