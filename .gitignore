@@ -10,3 +10,4 @@ build/
 *.substvars
 debian/drserv/
 debian/files
+.tags
