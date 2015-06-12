@@ -7,6 +7,10 @@ stop on runlevel [!2345]
 respawn
 respawn limit unlimited
 
+# Drop privileges
+setuid drserv
+setgid nogroup
+
 env DEFAULTFILE=/etc/default/drserv
 
 pre-start script
