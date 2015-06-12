@@ -60,7 +60,7 @@ def main():
 
     parser.add_argument('--key-file', action='store', required=True,
                         help='the rsa private key used to authenticate')
-    parser.add_argument('--auth-user', action='store',
+    parser.add_argument('--auth-user', action='store', required=True,
                         help='the username to authenticate as')
 
     parser.add_argument('--major-dist', action='store', required=True)
