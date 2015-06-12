@@ -7,9 +7,12 @@ install_requires = (
 )
 
 tests_require = (
-    'nose'
+    'nose',
 )
 
+setup_requires = (
+    'flake8',
+)
 
 setup(
     name='drserv',
@@ -24,6 +27,7 @@ setup(
     test_suite='nose.collector',
     install_requires=install_requires,
     tests_require=tests_require,
+    setup_requires=setup_requires,
     entry_points={
         'console_scripts': [
             'drserv-server = drserv.server:main',

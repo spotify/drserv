@@ -65,8 +65,6 @@ class DrservServer(object):
         self.wsgi_server = simple_server.make_server(
             '', port, wsgi.CrtauthMiddleware(self.handle_request, auth_server))
 
-
-
     def serve_forever(self):
         self.wsgi_server.serve_forever()
 
