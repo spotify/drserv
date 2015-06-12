@@ -1,0 +1,2 @@
+drserv.conf /etc
+/usr/bin/drserv-server

@@ -9,6 +9,18 @@ Build-Depends:
 Standards-Version: 3.9.3
 X-Python-Version: >= 2.7
 
-Package: drserv
+Package: drserv-common
 Architecture: all
-Description: drserv is an authenticated HTTP API for publishing .deb package to a repo
+Description: drserv is an authenticated HTTP API for publishing .deb package to a repo.
+
+Package: drserv-server
+Architecture: all
+Description: The drserv server part.
+Depends:
+    drserv-common (= ${source:Version})
+
+Package: drserv-client
+Architecture: all
+Description: A command line client for uploading .debs to a drserv enabled server.
+Depends:
+    drserv-common (= ${source:Version})
