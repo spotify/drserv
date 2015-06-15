@@ -17,7 +17,7 @@ pre-start script
   [ -f $DEFAULTFILE ] && . $DEFAULTFILE
 
   # don't start unless explicitly enabled in config
-  if [ -z "$ENABLED" ] ; then
+  if [ "$ENABLED" != "yes" ] ; then
     stop; exit 0;
   fi
 end script
