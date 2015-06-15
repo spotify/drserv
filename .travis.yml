@@ -2,4 +2,6 @@
 script:
   - debuild -uc -us
 before_install:
-  - sudo apt-get install -y devscripts
+  # Dependencies hand copied from debian/control, feel free to improve on
+  # this...
+  - sudo apt-get install -y debhelper python dh-virtualenv python-flake8
