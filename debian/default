@@ -1,0 +1,2 @@
+# Any value other than "yes" here will disable the drserv server
+ENABLED=no

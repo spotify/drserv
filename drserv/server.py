@@ -65,8 +65,6 @@ class DrservServer(object):
         self.wsgi_server = simple_server.make_server(
             '', port, wsgi.CrtauthMiddleware(self.handle_request, auth_server))
 
-
-
     def serve_forever(self):
         self.wsgi_server.serve_forever()
 
@@ -180,7 +178,7 @@ def main():
         description='The drserv service'
     )
     parser.add_argument('--config', action='store',
-                        default='/etc/drserv/drserv.conf',
+                        default='/etc/drserv.conf',
                         help='the config file')
 
     config = read_config(parser.parse_args().config)

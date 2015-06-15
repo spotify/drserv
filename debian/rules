@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python-virtualenv
+
+build-indep:
+	python setup.py flake8

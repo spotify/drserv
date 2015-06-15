@@ -1,0 +1,15 @@
+Source: drserv
+Section: non-free/net
+Priority: extra
+Maintainer: Client Build <client-build@spotify.com>
+Build-Depends:
+    debhelper (>= 8),
+    python (>= 2.7),
+    dh-virtualenv,
+    python-flake8,
+Standards-Version: 3.9.3
+X-Python-Version: >= 2.7
+
+Package: drserv
+Architecture: all
+Description: drserv is an authenticated HTTP API for publishing .deb package to a repo

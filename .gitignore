@@ -5,3 +5,9 @@ env/
 *.egg
 *.egg-info
 build/
+*.debhelper
+*.log
+*.substvars
+debian/drserv/
+debian/files
+.tags

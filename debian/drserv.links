@@ -1,0 +1,2 @@
+/usr/share/python/drserv/bin/drserv-client /usr/bin/drserv-client
+/usr/share/python/drserv/bin/drserv-server /usr/bin/drserv-server

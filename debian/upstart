@@ -1,0 +1,33 @@
+description "drserv is an authenticated HTTP API for publishing .deb package to a repo"
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+# never stop trying to respawn
+respawn
+respawn limit unlimited
+
+# Drop privileges
+setuid drserv
+setgid nogroup
+
+env DEFAULTFILE=/etc/default/drserv
+
+pre-start script
+  [ -f $DEFAULTFILE ] && . $DEFAULTFILE
+
+  # don't start unless explicitly enabled in config
+  if [ "$ENABLED" != "yes" ] ; then
+    stop; exit 0;
+  fi
+end script
+
+script
+  [ -f $DEFAULTFILE ] && . $DEFAULTFILE
+
+  chdir /home/drserv
+  exec drserv-server
+end script
+
+# prevent re-spawning more than once every second
+post-stop exec sleep 1
