@@ -1,7 +1,5 @@
 ---
+language: python
 script:
-  - debuild -uc -us
-before_install:
-  # Dependencies hand copied from debian/control, feel free to improve on
-  # this...
-  - sudo apt-get install -y debhelper python dh-virtualenv python-flake8
+  - python setup.py flake8
+  - python setup.py test
