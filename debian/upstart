@@ -18,6 +18,7 @@ pre-start script
 
   # don't start unless explicitly enabled in config
   if [ "$ENABLED" != "yes" ] ; then
+    echo "NOTE: drserv not enabled in $DEFAULTFILE, not starting"
     stop; exit 0;
   fi
 end script
