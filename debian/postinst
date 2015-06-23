@@ -1,4 +1,13 @@
 #!/bin/bash
 
 adduser --system drserv
-start drserv
+
+DEFAULTFILE=/etc/default/drserv
+[ -f $DEFAULTFILE ] && . $DEFAULTFILE
+
+# Only start if explicitly enabled in config
+if [ "$ENABLED" == "yes" ] ; then
+  start drserv
+else
+  echo "drserv not enabled in $DEFAULTFILE, not starting"
+fi
