@@ -178,7 +178,7 @@ def main():
         description='The drserv service'
     )
     parser.add_argument('--config', action='store',
-                        default='/etc/drserv.conf',
+                        default='/etc/drserv.yml',
                         help='the config file')
 
     config = read_config(parser.parse_args().config)
