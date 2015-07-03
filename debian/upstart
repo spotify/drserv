@@ -10,6 +10,7 @@ respawn limit unlimited
 # Drop privileges
 setuid drserv
 setgid nogroup
+umask 002
 
 env DEFAULTFILE=/etc/default/drserv
 
