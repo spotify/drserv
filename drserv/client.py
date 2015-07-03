@@ -35,8 +35,10 @@ def _authenticate(base_url, username, private_key_filename):
 
 
 def _auth_get(base_url, value):
-    response = requests.get("%s/_auth" % base_url,
-                            headers={"X-CHAP": value})
+    if not base_url.endswith("/"):
+        base_url += "/"
+
+    response = requests.get(base_url + '_auth', headers={"X-CHAP": value})
     if not response.ok:
         raise Exception("Authentication request failed with status %d: %s"
                         % (response.status_code, response.text))
