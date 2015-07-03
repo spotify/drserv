@@ -1,3 +1,11 @@
+drserv (0.1.1) unstable; urgency=low
+
+  * debian/upstart:
+    - Update umask to 002. Creating group writable directories is good for
+      interacting with pre-drserv ways of uploading packages.
+
+ -- Client-Build <client-build@spotify.com>  Fri, 29 May 2015 17:38:15 +0000
+
 drserv (0.1.0) unstable; urgency=low
 
   * Initial release.
