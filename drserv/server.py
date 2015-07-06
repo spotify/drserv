@@ -16,12 +16,12 @@ from __future__ import print_function
 import argparse
 import hashlib
 import logging
-import tempfile
 import urllib
 from wsgiref import simple_server
 import time
 import collections
 import subprocess
+import random
 import yaml
 import sys
 import os
@@ -51,15 +51,11 @@ class DrservServer(object):
     DrservServer instances listens to a port, responds to API calls
     and
     """
-    def __init__(self, port, base_dir, temp_dir, index_command,
-                 auth_server):
+    def __init__(self, port, base_dir, index_command, auth_server):
         log.info('Starting server listening to port %d', port)
         self.base_dir = base_dir
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
-        self.temp_dir = temp_dir
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
         self.index_command = index_command
 
         self.wsgi_server = simple_server.make_server(
@@ -79,17 +75,17 @@ class DrservServer(object):
             log.debug("Publishing %s to %s/%s/%s" %
                       (pi.file, pi.major_dist, pi.minor_dist, pi.component))
 
-            temp_filename, checksum = self.store_post_data(
-                int(environ['CONTENT_LENGTH']), environ['wsgi.input'],
-                self.temp_dir)
-            log.debug("Received data in file %s" % temp_filename)
-
             # PyTypeChecker is buggy in Intellij IDEA 14.1.1
             # noinspection PyTypeChecker
             target_dir = self.build_target_dir(self.base_dir, pi)
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
             target = os.path.join(target_dir, pi.file)
+            temp_filename, checksum = self.store_post_data(
+                int(environ['CONTENT_LENGTH']), environ['wsgi.input'],
+                target)
+            log.debug("Received data in file %s" % temp_filename)
+
             if os.path.exists(target):
                 os.unlink(temp_filename)
                 raise HttpException(
@@ -123,13 +119,19 @@ class DrservServer(object):
         )
 
     @staticmethod
-    def store_post_data(length, to_read_from, temp_dir):
+    def store_post_data(length, to_read_from, final_destination):
         """
         Reads length bytes of POST data from to_read_from and store in a
-        unique temporary file in temp_dir
+        unique temporary file based on the final_destination name.
         """
         hasher = hashlib.sha256()
-        with tempfile.NamedTemporaryFile(dir=temp_dir, delete=False) as f:
+        # We roll our own temporary file here to get umask based permissions,
+        # and we do it next to the actual destination file to honor any setuid
+        # or setgid bits on its parent directory.
+        temp_file_name = "{}.part-{}".format(final_destination,
+                                             '.part-',
+                                             random.randint(0, 100100100))
+        with open(temp_file_name, 'w') as f:
             to_read = min(length, BUFFER_SIZE)
             while length:
                 buf = to_read_from.read(to_read)
@@ -190,7 +192,7 @@ def main():
         lowest_supported_version=1)
 
     DrservServer(
-        config['listen_port'], config['target_basedir'], config['temp_dir'],
+        config['listen_port'], config['target_basedir'],
         config['index_command'], auth_server
     ).serve_forever()
 

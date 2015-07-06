@@ -1,3 +1,10 @@
+drserv (0.1.2) unstable; urgency=low
+
+  * drserv/server.py:
+    - Give umask based permissions to received files.
+
+ -- Client-Build <client-build@spotify.com>  Mon, 6 Jul 2015 10:54:15 +0000
+
 drserv (0.1.1) unstable; urgency=low
 
   * debian/upstart:
