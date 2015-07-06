@@ -51,15 +51,11 @@ class DrservServer(object):
     DrservServer instances listens to a port, responds to API calls
     and
     """
-    def __init__(self, port, base_dir, temp_dir, index_command,
-                 auth_server):
+    def __init__(self, port, base_dir, index_command, auth_server):
         log.info('Starting server listening to port %d', port)
         self.base_dir = base_dir
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
-        self.temp_dir = temp_dir
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
         self.index_command = index_command
 
         self.wsgi_server = simple_server.make_server(
@@ -129,8 +125,9 @@ class DrservServer(object):
         unique temporary file based on the final_destination name.
         """
         hasher = hashlib.sha256()
-        # We roll our own temporary file here to get umask based permissions
-        # and ownership for it.
+        # We roll our own temporary file here to get umask based permissions,
+        # and we do it next to the actual destination file to honor any setuid
+        # or setgid bits on its parent directory.
         temp_file_name = "{}.part-{}".format(final_destination,
                                              '.part-',
                                              random.randint(0, 100100100))
@@ -195,7 +192,7 @@ def main():
         lowest_supported_version=1)
 
     DrservServer(
-        config['listen_port'], config['target_basedir'], config['temp_dir'],
+        config['listen_port'], config['target_basedir'],
         config['index_command'], auth_server
     ).serve_forever()
 
