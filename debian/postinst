@@ -1,6 +1,6 @@
 #!/bin/bash
 
-adduser --system drserv
+adduser --home /var/lib/drserv --group --system drserv
 
 DEFAULTFILE=/etc/default/drserv
 [ -f $DEFAULTFILE ] && . $DEFAULTFILE

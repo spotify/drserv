@@ -1,2 +1,8 @@
 # Any value other than "yes" here will disable the drserv server
 ENABLED=no
+
+# Set user identity.
+DRSERV_USER=drserv
+
+# Set group identity.
+DRSERV_GROUP=drserv

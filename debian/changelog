@@ -1,3 +1,14 @@
+drserv (0.1.3) unstable; urgency=low
+
+  * debian/default
+    - Add vars DRSERV_USER and DRSERV_GROUP
+  * debian/upstart
+    - Read user and group from /etc/default/drserv.
+  * debian/postinst
+    - Change the way how user is created.
+
+ -- Client-Build <client-build@spotify.com>  Tue, 7 Jul 2015 12:12:01 +0000
+
 drserv (0.1.2) unstable; urgency=low
 
   * drserv/server.py:
