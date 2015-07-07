@@ -191,12 +191,17 @@ def main():
         config['crtauth_secret'],
         key_provider.FileKeyProvider(config['keys_dir']),
         config['service_name'],
-        lowest_supported_version=1)
+        lowest_supported_version=1
+    )
 
-    DrservServer(
-        config['listen_port'], config['target_basedir'],
-        config['index_command'], auth_server
-    ).serve_forever()
+    serv = DrservServer(
+        config['listen_port'],
+        config['target_basedir'],
+        config['index_command'],
+        auth_server
+    )
+
+    serv.serve_forever()
 
 
 def read_config(file_name):
