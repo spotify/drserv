@@ -13,6 +13,7 @@ install_requires = (
 tests_require = (
     'pytest-cov',
     'pytest-cache',
+    'pytest-quickcheck',
     'tox',
 )
 
