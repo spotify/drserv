@@ -14,10 +14,11 @@
 import argparse
 import os
 import sys
-import urlparse
 from crtauth import ssh
 from crtauth import client
 import requests
+
+from six.moves.urllib import parse as urlparse
 
 
 def _authenticate(base_url, username, private_key_filename):
@@ -71,16 +72,22 @@ def main():
 
     args = parser.parse_args()
     token = _authenticate(args.url, args.auth_user, args.key_file)
-    url = ('%s/v1/publish/%s/%s/%s/%s' %
-           (args.url, args.major_dist, args.minor_dist, args.component,
-            os.path.basename(args.package_filename)))
+
+    url = '%s/v1/publish/%s/%s/%s/%s' % (
+        args.url,
+        args.major_dist,
+        args.minor_dist,
+        args.component,
+        os.path.basename(args.package_filename),
+    )
+
     with open(args.package_filename) as f:
         response = requests.post(url, data=f,
                                  headers={'Authorization': 'chap:' + token})
         if response.ok:
-            print 'Upload succeeded'
+            print('Upload succeeded')
         else:
-            print 'Fail: %d: %s' % (response.status_code, response.text)
+            print('Fail: %d: %s' % (response.status_code, response.text))
 
 
 if __name__ == '__main__':

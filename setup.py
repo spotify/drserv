@@ -3,6 +3,7 @@ from setuptools import setup
 install_requires = (
     'pyaml',
     'crtauth',
+    'six',
     'requests==2.6.0',
 )
 

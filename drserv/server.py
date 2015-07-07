@@ -23,6 +23,7 @@ import collections
 import subprocess
 import random
 import yaml
+import six
 import sys
 import os
 from crtauth import server
@@ -100,7 +101,7 @@ class DrservServer(object):
             start_response("202 Accepted", [('Content-type', 'text/plain')])
             return "OK\n",
 
-        except HttpException, e:
+        except HttpException as e:
             log.warning("Failed request: " + e.message)
             start_response(e.message,
                            [('Content-type', 'text/plain'),
@@ -146,7 +147,7 @@ class DrservServer(object):
         """
         Sanity checking and parsing of the path provided with the API call
         """
-        if not isinstance(path, basestring):
+        if not isinstance(path, six.string_types):
             raise ValueError('wrong type %s of parameter path' % type(path))
         for i, c in enumerate(path):
             if not 0x1f < ord(c) < 0x7f:
@@ -175,6 +176,7 @@ def setup_logging():
 
 def main():
     setup_logging()
+
     parser = argparse.ArgumentParser(
         'drserv-server',
         description='The drserv service'
@@ -201,7 +203,7 @@ def read_config(file_name):
     try:
         with open(file_name) as f:
             return yaml.load(f)
-    except IOError, e:
+    except IOError as e:
         fail('Failed to open config {}: {}'.format(file_name, e.strerror))
 
 
