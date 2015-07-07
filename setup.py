@@ -1,4 +1,7 @@
+import sys
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
+
 
 install_requires = (
     'pyaml',
@@ -8,12 +11,34 @@ install_requires = (
 )
 
 tests_require = (
-    'nose',
+    'pytest-cov',
+    'pytest-cache',
+    'tox',
 )
 
 setup_requires = (
     'flake8',
 )
+
+
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = [
+            'test',
+            '-v',
+            '--cov=drserv',
+            '--cov-report=xml',
+            '--cov-report=term-missing',
+            '--result-log=pytest-results.log'
+        ]
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
+
 
 setup(
     name='drserv',
@@ -25,10 +50,12 @@ setup(
                  'repositories'),
     license='Apache 2.0',
     packages=['drserv'],
-    test_suite='nose.collector',
     install_requires=install_requires,
     tests_require=tests_require,
     setup_requires=setup_requires,
+    cmdclass={
+        'test': PyTest,
+    },
     entry_points={
         'console_scripts': [
             'drserv-server = drserv.server:main',
