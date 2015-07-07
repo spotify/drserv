@@ -12,40 +12,48 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest
+import pytest
 from drserv import server
 
 
-class TestServer(unittest.TestCase):
+@pytest.fixture
+def cls():
+    return server.DrservServer
 
-    def test_parse_path(self):
-        self.assertRaises(ValueError, server.DrservServer.parse_path, 42)
-        self.assertRaises(ValueError, server.DrservServer.parse_path, u'€')
 
-        major, minor, component, filename = server.DrservServer.parse_path(
-            '/v1/publish/squeeze/stable/non-free/some-package_1.deb')
-        self.assertEquals('squeeze', major)
-        self.assertEquals('stable', minor)
-        self.assertEquals('non-free', component)
-        self.assertEquals('some-package_1.deb', filename)
-
-        # control characters not allowed
-        self.assertRaises(ValueError, server.DrservServer.parse_path, '\x00')
-
-        # can't have .. parameters
-        self.assertRaises(
-            ValueError, server.DrservServer.parse_path,
-            '/v1/publish/../../../some-package_1.deb',
+class TestServerParsePath(object):
+    def test_part_splitting(self, cls):
+        major, minor, component, filename = cls.parse_path(
+            '/v1/publish/squeeze/stable/non-free/some-package_1.deb'
         )
+        assert major == 'squeeze'
+        assert minor == 'stable'
+        assert component == 'non-free'
+        assert filename == 'some-package_1.deb'
 
-        # filename part needs to end in ".deb"
-        self.assertRaises(
-            ValueError, server.DrservServer.parse_path,
-            '/v1/publish/squeeze/stable/non-free/foo'
-        )
+    # TODO thiderman: All of these are raising the same exception. It's
+    # probably okay, but if we want to know exactly what's going on we would
+    # need to differentiate them more.
+    def test_invalid_numeric_path(self, cls):
+        with pytest.raises(ValueError):
+            cls.parse_path(42)
 
-        # wrong number of path elements
-        self.assertRaises(
-            server.HttpException, server.DrservServer.parse_path,
-            '/v1/publish/squeeze/stable/foo.deb'
-        )
+    def test_invalid_unicode_path(self, cls):
+        with pytest.raises(ValueError):
+            cls.parse_path(u'€')
+
+    def test_control_characters_disallowed(self, cls):
+        with pytest.raises(ValueError):
+            cls.parse_path('\x00')
+
+    def test_relative_paths_disallowed(self, cls):
+        with pytest.raises(ValueError):
+            cls.parse_path('/v1/publish/../../../some-package_1.deb')
+
+    def test_deb_file_suffix_is_required(self, cls):
+        with pytest.raises(ValueError):
+            cls.parse_path('/v1/publish/squeeze/stable/non-free/foo')
+
+    def test_wrong_number_of_path_arguments(self, cls):
+        with pytest.raises(server.HttpException):
+            cls.parse_path('/v1/publish/squeeze/stable/foo.deb')
