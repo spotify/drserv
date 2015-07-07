@@ -59,3 +59,11 @@ docs/_build/
 # PyBuilder
 target/
 share/
+
+# drserv specific
+*.debhelper
+*.log
+*.substvars
+debian/drserv/
+debian/files
+tmp/
