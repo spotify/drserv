@@ -7,9 +7,6 @@ stop on runlevel [!2345]
 respawn
 respawn limit unlimited
 
-# Drop privileges
-setuid drserv
-setgid nogroup
 umask 002
 
 env DEFAULTFILE=/etc/default/drserv
@@ -27,8 +24,13 @@ end script
 script
   [ -f $DEFAULTFILE ] && . $DEFAULTFILE
 
-  chdir /home/drserv
-  exec drserv-server
+  [ -z $DRSERV_USER ]  && DRSERV_USER=drserv
+  [ -z $DRSERV_GROUP ] && DRSERV_GROUP=drserv
+
+  exec start-stop-daemon \
+        --start \
+        --chuid $DRSERV_USER:$DRSERV_GROUP \
+        --exec /usr/bin/drserv-server
 end script
 
 # prevent re-spawning more than once every second
