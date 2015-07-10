@@ -67,3 +67,4 @@ share/
 debian/drserv/
 debian/files
 tmp/
+test/output/
