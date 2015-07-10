@@ -2,7 +2,7 @@
 # sample configuration file for the dserv service
 
 # the port to listen to
-listen_port: 8080
+listen_port: 32132
 
 # the directory to look for public keys in for authentication
 keys_dir: test/pubkeys
